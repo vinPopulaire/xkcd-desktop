@@ -1,31 +1,32 @@
 #!/usr/bin/env python
 #
 # xkcd.py
-# Script to download the latest XKCD comic 
+# Script to download the latest XKCD comic
 # and place it as your GNOME wallpaper
-# 
+#
 # Copyright (C) 2010 Shreyank Gupta <sgupta@REDHAT.COM>
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
+import sys
 import urllib
 import json
 from subprocess import call
 import Image, ImageDraw, ImageFont
 
-TMPFILE = "/tmp/xkcd.png"
+TMPFILE = "last_xkcd.png"
 XKCD_URL = "http://xkcd.com/info.0.json"
 BACKGROUND = "#ffffffffffff"
 
@@ -60,7 +61,7 @@ title = json_data['title']
 footer = wrap(json_data['alt'], 80)
 
 # Download image
-call(["wget", 
+call(["wget",
     "-O",
     TMPFILE,
     url])
@@ -82,7 +83,7 @@ xkcd = Image.open(TMPFILE)
 # Calculate size of the new image
 new_size = (
     max(foot_sizes_hor + [xkcd.size[0], head_size[0]]),
-    (xkcd.size[1] + head_size[1] + 
+    (xkcd.size[1] + head_size[1] +
         (foot_size_ver + 5)*len(footer) + 20))
 
 # New image instance
@@ -105,38 +106,20 @@ for index, foot in enumerate(footer):
     foot_position = (foot_position_hor, foot_position_ver)
     draw.text(foot_position, foot, font=footer_font, fill=TEXT_COLOR)
 
-# Delete draw object 
-del draw 
+# Delete draw object
+del draw
 
 # Paster original image
 xkcd_position = ((new_size[0] -xkcd.size[0])/2,
     head_size[1] + 10)
 out.paste(xkcd, xkcd_position)
-out.save(TMPFILE, FORMAT)  
+out.save(TMPFILE, FORMAT)
 
 # Set as desktop background
-call(["gconftool-2",
-    "-t",
-    "str",
-    "--set",
-    "/desktop/gnome/background/picture_options",
-    "centred"])
-call(["gconftool-2",
-    "-t",
-    "str",
-    "--set",
-    "/desktop/gnome/background/primary_color",
-    BACKGROUND])
-call(["gconftool-2",
-    "-t",
-    "str",
-    "--set",
-    "/desktop/gnome/background/secondary_color",
-    BACKGROUND])
-call(["gconftool-2",
-    "-t",
-    "str",
-    "--set",
-    "/desktop/gnome/background/picture_filename",
-    TMPFILE])
+base_path = os.path.abspath(os.path.dirname(sys.argv[0]))
+img_path_png = os.path.join(base_path, TMPFILE)
 
+osString = 'gsettings set org.gnome.desktop.background picture-uri file://' + img_path_png
+os.system(osString)
+osString = 'gsettings set org.gnome.desktop.background picture-options centered '
+os.system(osString)
