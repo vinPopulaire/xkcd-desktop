@@ -60,10 +60,14 @@ url = json_data['img']
 title = json_data['title']
 footer = wrap(json_data['alt'], 80)
 
+# set path of image
+base_path = os.path.abspath(os.path.dirname(sys.argv[0]))
+img_path_png = os.path.join(base_path, TMPFILE)
+
 # Download image
 call(["wget",
     "-O",
-    TMPFILE,
+    img_path_png,
     url])
 
 # Image processing to put text onto the image
@@ -78,7 +82,7 @@ foot_sizes_hor = [footer_font.getsize(foot)[0] for foot in footer]
 foot_size_ver = footer_font.getsize("test")[1]
 
 # Open original image
-xkcd = Image.open(TMPFILE)
+xkcd = Image.open(img_path_png)
 
 # Calculate size of the new image
 new_size = (
@@ -109,16 +113,13 @@ for index, foot in enumerate(footer):
 # Delete draw object
 del draw
 
-# Paster original image
+# Paste original image
 xkcd_position = ((new_size[0] -xkcd.size[0])/2,
     head_size[1] + 10)
 out.paste(xkcd, xkcd_position)
-out.save(TMPFILE, FORMAT)
+out.save(img_path_png, FORMAT)
 
 # Set as desktop background
-base_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-img_path_png = os.path.join(base_path, TMPFILE)
-
 osString = 'gsettings set org.gnome.desktop.background picture-uri file://' + img_path_png
 os.system(osString)
 osString = 'gsettings set org.gnome.desktop.background picture-options centered '
